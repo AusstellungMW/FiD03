@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Station 3 — Aufbruch in den 70ern</title>
+  <style>
+    :root{ --bg:#0e1117; --card:#12161f; --text:#e6edf3; --muted:#9aa7b2; --chip:#202634; --accent:#1f6f3d; --accent-press:#185833; --shadow:rgba(0,0,0,.35); }
+    html,body{height:100%}
+    body{margin:0; font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--text); background:var(--bg)}
+    .container{max-width:920px; margin:0 auto; padding:16px}
+    header{position:sticky; top:0; z-index:5; backdrop-filter:saturate(140%) blur(8px); background: color-mix(in srgb, var(--bg) 80%, transparent); border-bottom:1px solid rgba(255,255,255,.06)}
+    .hero{position:relative; background:linear-gradient(180deg, color-mix(in srgb, var(--card) 90%, transparent) 0%, transparent 100%); border-radius:20px; padding:22px 20px 18px; box-shadow:0 10px 30px var(--shadow) inset}
+    .lang{position:absolute; right:12px; top:12px}
+    .lang button{appearance:none; -webkit-tap-highlight-color:transparent; cursor:pointer; border:1px solid rgba(255,255,255,.08); background:var(--chip); color:#fff; padding:10px 14px; border-radius:999px; font-weight:800; letter-spacing:.5px; box-shadow:0 8px 18px rgba(0,0,0,.25); transition:transform .08s ease, box-shadow .2s ease}
+    .lang button:active{transform:translateY(1px) scale(.98); box-shadow:0 4px 10px rgba(0,0,0,.35)}
+    h1{margin:0; font-weight:900; letter-spacing:.2px; font-size:clamp(22px,4.2vw,34px)}
+    .subtitle{margin-top:6px; color:var(--muted); font-weight:700; font-size:clamp(14px,2.3vw,18px)}
+
+    /* Player */
+    .player{margin:16px 0 6px; background:var(--card); border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:14px; box-shadow:0 8px 24px rgba(0,0,0,.25)}
+    .row{display:flex; align-items:center; gap:12px}
+    .play{appearance:none; border:none; border-radius:999px; width:44px; height:44px; background:var(--accent); color:#fff; font-weight:900; font-size:16px; cursor:pointer; display:grid; place-items:center; box-shadow:0 10px 26px rgba(31,111,61,.35)}
+    .play:active{background:var(--accent-press)}
+    .times{min-width:78px; text-align:right; font-variant-numeric:tabular-nums; color:var(--muted)}
+    .range{flex:1}
+    input[type=range]{width:100%}
+
+    main .text{margin-top:8px; font-size:18px}
+    main .text p{margin:0 0 14px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="hero">
+        <div class="lang"><button id="langBtn" aria-label="Sprache umschalten">DE</button></div>
+        <h1 id="title">Aufbruch in den 70ern</h1>
+        <div class="subtitle" id="subtitle">Station 3</div>
+        <div class="player" aria-label="Audio-Player">
+          <div class="row">
+            <button class="play" id="playBtn" aria-label="Abspielen/Pause">▶</button>
+            <div class="range"><input id="seek" type="range" min="0" max="100" value="0" step="1" aria-label="Positionsregler"></div>
+            <div class="times"><span id="cur">0:00</span> / <span id="dur">0:00</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <article class="text" id="body"></article>
+  </main>
+
+  <audio id="audio" preload="none"></audio>
+
+  <script>
+    /* === Общая база аудио (единый банк файлов) === */
+    const AUDIO_BASE = 'https://ausstellungmw.github.io/Frauen-im-geteilten-Deutschland/assets/audio/';
+    const getAudioUrl = (lang, num) => `${AUDIO_BASE}${lang}/${num}.mp3`;
+
+    const i18n = {
+      de: {
+        title: 'Aufbruch in den 70ern',
+        subtitle: 'Station 3',
+        body: `Deutschland in den frühen 1970er-Jahren:
+Der Wiederaufbau war weitgehend abgeschlossen.
+Die deutsche Teilung schien unabänderlich.
+
+Im Westen stand die Regierung Willy Brandts für den gesellschaftlichen Aufbruch.
+Und im Osten?
+Sicher, Erich Honecker war nicht der Willy Brandt der DDR,
+aber viele Ostdeutsche deuteten seine sozialpolitischen Versprechen
+als Signal, dass sich die Lebensverhältnisse verbessern würden.
+
+Der Slogan „So wie wir heute arbeiten, werden wir morgen leben“
+zog nicht mehr.
+Die Küchenschürze hatte ausgedient,
+die Röcke wurden seit Mitte der 1960er-Jahre immer kürzer,
+und trotz Mauer und Stacheldraht orientierten sich auch die ostdeutschen Frauen
+an den Moden, die über den großen Teich, aus Italien oder Paris,
+ins geteilte Deutschland schwappten.
+
+Nicht nur die Rocklänge glich sich in Ost und West an,
+auch die Lebensentwürfe der Frauen schienen damals recht ähnlich.
+Früh wurde geheiratet, oft kirchlich,
+bald darauf kam das erste Kind zur Welt,
+um das sich selbstverständlich die Frau zu kümmern hatte –
+ebenso wie um den Mann und den Haushalt.`,
+        code: 'DE',
+        audioNum: 3,
+        ariaPlay:'Abspielen', ariaPause:'Pause'
+      },
+      en: {
+        title: 'Awakening in the 1970s',
+        subtitle: 'Station 3',
+        body: `Germany in the early 1970s:
+Reconstruction had been largely completed,
+and German division seemed irreversible.
+
+In West Germany, Willy Brandt’s government
+stood for a spirit of social and political renewal.
+And in the East?
+Of course, Erich Honecker was no East German Willy Brandt,
+but many citizens interpreted his socio-political promises
+as a sign that living standards would improve.
+
+The old slogan “As we work today, so shall we live tomorrow”
+no longer convinced anyone.
+The kitchen apron had outlived its time,
+and skirts had been getting shorter and shorter since the mid-1960s.
+Despite the Wall and barbed wire,
+East German women followed the fashions
+that flowed into divided Germany from across the Atlantic, from Italy and Paris.
+
+Not only the length of the skirts but also the life patterns of women
+appeared quite similar in East and West at that time.
+Marriages were concluded early, often in church,
+and soon the first child arrived —
+to be cared for, of course, by the wife,
+along with her husband and the household.`,
+        code: 'EN',
+        audioNum: 3,
+        ariaPlay:'Play', ariaPause:'Pause'
+      }
+    };
+
+    const langKey='station3_lang';
+    let lang = localStorage.getItem(langKey) || 'de';
+
+    const titleEl = document.getElementById('title');
+    const subtitleEl = document.getElementById('subtitle');
+    const bodyEl = document.getElementById('body');
+    const langBtn = document.getElementById('langBtn');
+
+    function setBodyText(text){
+      bodyEl.innerHTML = '';
+      text.split(/\n\s*\n|\n(?=\S)/).forEach(p=>{
+        const el=document.createElement('p'); el.textContent=p.trim(); bodyEl.appendChild(el);
+      });
+    }
+
+    const audio = document.getElementById('audio');
+    const playBtn = document.getElementById('playBtn');
+    const seek = document.getElementById('seek');
+    const cur = document.getElementById('cur');
+    const dur = document.getElementById('dur');
+
+    function toTime(s){ s = Math.max(0, s|0); const m=(s/60)|0, r=(s%60)|0; return `${m}:${r.toString().padStart(2,'0')}` }
+
+    function loadAudio(){
+      const t = i18n[lang];
+      const folder = (lang==='de') ? 'de' : 'en';
+      audio.src = getAudioUrl(folder, t.audioNum); // .../assets/audio/de/3.mp3
+      audio.load();
+      seek.value = 0; seek.max = 100; cur.textContent='0:00'; dur.textContent='0:00';
+      playBtn.textContent='▶'; playBtn.setAttribute('aria-label', t.ariaPlay);
+    }
+
+    playBtn.addEventListener('click', ()=>{ if(audio.paused){ audio.play().catch(()=>{}); } else { audio.pause(); } });
+    audio.addEventListener('play', ()=>{ playBtn.textContent='❚❚'; playBtn.setAttribute('aria-label', i18n[lang].ariaPause); });
+    audio.addEventListener('pause', ()=>{ playBtn.textContent='▶'; playBtn.setAttribute('aria-label', i18n[lang].ariaPlay); });
+    audio.addEventListener('loadedmetadata', ()=>{ dur.textContent = toTime(audio.duration||0); });
+    audio.addEventListener('timeupdate', ()=>{ if(audio.duration){ seek.max = Math.floor(audio.duration); seek.value = Math.floor(audio.currentTime); cur.textContent = toTime(audio.currentTime); } });
+    seek.addEventListener('input', ()=>{ if(audio.duration){ audio.currentTime = +seek.value; }});
+
+    function applyLang(){
+      const t = i18n[lang];
+      document.documentElement.lang = lang;
+      titleEl.textContent = t.title; subtitleEl.textContent = t.subtitle; setBodyText(t.body);
+      langBtn.textContent = t.code; loadAudio();
+    }
+
+    langBtn.addEventListener('click', ()=>{ lang = (lang==='de') ? 'en' : 'de'; localStorage.setItem(langKey, lang); applyLang(); });
+
+    applyLang();
+  </script>
+</body>
+</html>
