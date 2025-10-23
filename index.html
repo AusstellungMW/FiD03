@@ -34,7 +34,7 @@
   <header>
     <div class="container">
       <div class="hero">
-        <div class="lang"><button id="langBtn" aria-label="Sprache umschalten">DE</button></div>
+        <div class="lang"><button id="langBtn" aria-label="Sprache umschalten">EN</button></div>
         <h1 id="title">Aufbruch in den 70ern</h1>
         <div class="subtitle" id="subtitle">Station 3</div>
         <div class="player" aria-label="Audio-Player">
@@ -87,7 +87,7 @@ Früh wurde geheiratet, oft kirchlich,
 bald darauf kam das erste Kind zur Welt,
 um das sich selbstverständlich die Frau zu kümmern hatte –
 ebenso wie um den Mann und den Haushalt.`,
-        code: 'DE',
+        codeOpp: 'EN',
         audioNum: 3,
         ariaPlay:'Abspielen', ariaPause:'Pause'
       },
@@ -119,7 +119,7 @@ Marriages were concluded early, often in church,
 and soon the first child arrived —
 to be cared for, of course, by the wife,
 along with her husband and the household.`,
-        code: 'EN',
+        codeOpp: 'DE',
         audioNum: 3,
         ariaPlay:'Play', ariaPause:'Pause'
       }
@@ -133,13 +133,18 @@ along with her husband and the household.`,
     const bodyEl = document.getElementById('body');
     const langBtn = document.getElementById('langBtn');
 
+    // Абзацы: двойные переносы = новый абзац; одиночные переносы -> пробел
     function setBodyText(text){
       bodyEl.innerHTML = '';
-      text.split(/\n\s*\n|\n(?=\S)/).forEach(p=>{
-        const el=document.createElement('p'); el.textContent=p.trim(); bodyEl.appendChild(el);
+      text.trim().split(/\n\s*\n/).forEach(p=>{
+        const normalized = p.replace(/\s*\n\s*/g, ' ').trim();
+        const el = document.createElement('p');
+        el.textContent = normalized;
+        bodyEl.appendChild(el);
       });
     }
 
+    // Аудио
     const audio = document.getElementById('audio');
     const playBtn = document.getElementById('playBtn');
     const seek = document.getElementById('seek');
@@ -151,27 +156,37 @@ along with her husband and the household.`,
     function loadAudio(){
       const t = i18n[lang];
       const folder = (lang==='de') ? 'de' : 'en';
-      audio.src = getAudioUrl(folder, t.audioNum); // .../assets/audio/de/3.mp3
+      audio.src = getAudioUrl(folder, t.audioNum);
       audio.load();
       seek.value = 0; seek.max = 100; cur.textContent='0:00'; dur.textContent='0:00';
       playBtn.textContent='▶'; playBtn.setAttribute('aria-label', t.ariaPlay);
     }
 
+    function applyLang(){
+      const t = i18n[lang];
+      document.documentElement.lang = lang;
+      titleEl.textContent = t.title;
+      subtitleEl.textContent = t.subtitle;
+      setBodyText(t.body);
+      // показываем на кнопке ПРОТИВОПОЛОЖНЫЙ язык
+      langBtn.textContent = (lang === 'de') ? 'EN' : 'DE';
+      loadAudio();
+    }
+
+    // Тоггл языка
+    langBtn.addEventListener('click', ()=>{
+      lang = (lang==='de') ? 'en' : 'de';
+      localStorage.setItem(langKey, lang);
+      applyLang();
+    });
+
+    // Плейер
     playBtn.addEventListener('click', ()=>{ if(audio.paused){ audio.play().catch(()=>{}); } else { audio.pause(); } });
     audio.addEventListener('play', ()=>{ playBtn.textContent='❚❚'; playBtn.setAttribute('aria-label', i18n[lang].ariaPause); });
     audio.addEventListener('pause', ()=>{ playBtn.textContent='▶'; playBtn.setAttribute('aria-label', i18n[lang].ariaPlay); });
     audio.addEventListener('loadedmetadata', ()=>{ dur.textContent = toTime(audio.duration||0); });
     audio.addEventListener('timeupdate', ()=>{ if(audio.duration){ seek.max = Math.floor(audio.duration); seek.value = Math.floor(audio.currentTime); cur.textContent = toTime(audio.currentTime); } });
     seek.addEventListener('input', ()=>{ if(audio.duration){ audio.currentTime = +seek.value; }});
-
-    function applyLang(){
-      const t = i18n[lang];
-      document.documentElement.lang = lang;
-      titleEl.textContent = t.title; subtitleEl.textContent = t.subtitle; setBodyText(t.body);
-      langBtn.textContent = t.code; loadAudio();
-    }
-
-    langBtn.addEventListener('click', ()=>{ lang = (lang==='de') ? 'en' : 'de'; localStorage.setItem(langKey, lang); applyLang(); });
 
     applyLang();
   </script>
